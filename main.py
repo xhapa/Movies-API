@@ -59,3 +59,24 @@ def create_movie(
     movie: Movie = Body(...)
 ):
     movies.append(movie)
+    return movies
+
+@app.put('/movies/{movie_id}', tags=['movies'])
+def update_movie(
+    movie_id: int = Path(...),
+    movie: Movie = Body(...)
+):
+    for idx, item in enumerate(movies):
+        if item.id == movie_id:
+            movies[idx] = movie
+
+    return movies 
+
+@app.delete('/movies/{movie_id}', tags=['movies'])
+def delete_movie(
+    movie_id: int = Path(...)
+):
+    for movie in movies:
+        if movie.id == movie_id:
+            movies.remove(movie)
+            return movies
