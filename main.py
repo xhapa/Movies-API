@@ -11,7 +11,7 @@ from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 app.title = "My app"
-app.version = "0.0.1"
+app.version = "0.0.2"
 
 movies = []
 
