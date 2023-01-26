@@ -6,30 +6,14 @@ from pydantic import BaseModel
 from pydantic import Field
 #FastAPI
 from fastapi import FastAPI
+from fastapi import Body, Query, Path
 from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 app.title = "My app"
 app.version = "0.0.1"
 
-movies = [
-    {
-        'id': 1,
-        'title': 'Avatar',
-        'overview': "En un exuberante planeta llamado Pandora viven los Na'vi, seres que ...",
-        'year': '2009',
-        'rating': 7.8,
-        'category': 'Acción'    
-    },
-    {
-        'id': 2,
-        'title': 'Avatar',
-        'overview': "En un exuberante planeta llamado Pandora viven los Na'vi, seres que ...",
-        'year': '2009',
-        'rating': 7.8,
-        'category': 'Acción'    
-    } 
-]
+movies = []
 
 #Models
 class Movie(BaseModel):
@@ -50,22 +34,28 @@ def get_movies():
 
 @app.get('/movies/{movie_id}', tags=['movies'])
 def get_movie(
-    movie_id: int
+    movie_id: int = Path(...)
 ):
     for movie in movies:
-        if movie['id'] ==  movie_id:
+        if movie.id ==  movie_id:
             return movie
     return []
 
 @app.get('/movies/', tags=['movies'])
 def get_movies_by_category(
-    category: str,
-    year: int
+    category: str = Query(...),
+    year: Optional[int] = Query(None)
 ):
     return category
 
 @app.get('/movie/detail', tags=['movies'])
 def get_movie_by_category(
-    category: str
+    category: str = Query(...)
 ):
-    return [movie for movie in movies if movie['category'] == category]
+    return [movie for movie in movies if movie.category== category]
+
+@app.post('/movies', tags=['movies'])
+def create_movie(
+    movie: Movie = Body(...)
+):
+    movies.append(movie)
