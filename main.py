@@ -5,18 +5,32 @@ from typing import Optional, List
 from fastapi import FastAPI
 from fastapi import Body, Query, Path, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.encoders import jsonable_encoder
 
-#Own
+#Own----------------------------------------------------------------------------
+
+#Models
+from models.movie import Movie as MovieModel
+from models.user import User as UserModel
+
+#Middlewares
 from jwt_manager import create_token
-from models import Movie, User
 from security import JWTBearer
+
+#Config
+from config.database import Session, Base, engine
+
+#Schemas
+from schemas.movie import Movie 
+from schemas.user import User
+
 
 # Movies App -------------------------------------------------------------------
 app = FastAPI()
 app.title = "My app"
 app.version = "0.0.2"
 
-movies = []
+Base.metadata.create_all(bind= engine)
 
 # Home page
 @app.get('/')
@@ -35,7 +49,9 @@ async def login(
 # Movies page
 @app.get('/movies', tags=['movies'], response_model=List[Movie], status_code=200, dependencies=[Depends(JWTBearer())])
 async def get_movies() -> List[Movie]:
-    return movies
+    db = Session()
+    movies = db.query(MovieModel).all()
+    return jsonable_encoder(movies)
 
 @app.get('/movies/{movie_id}', tags=['movies'], response_model=Movie)
 async def get_movie(
@@ -46,10 +62,11 @@ async def get_movie(
         description="This is the movie ID"
     )
 ) -> Movie:
-    for movie in movies:
-        if movie.id ==  movie_id:
-            return movie
-    return JSONResponse(status_code=404, content=[])
+    db = Session()
+    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    if not movie:
+        return JSONResponse(status_code= 404, content={'message': 'Not found'})
+    return JSONResponse(status_code=200, content=jsonable_encoder(movie))
 
 @app.get('/movies/', tags=['movies'])
 async def get_movies_by_category(
@@ -68,7 +85,11 @@ async def get_movies_by_category(
         description="This is the movie year"
     )
 ):
-    return category
+    db = Session()
+    movies = db.query(MovieModel).filter(MovieModel.category == category).all()
+    if not movies:
+        return JSONResponse(status_code= 404, content={'message': 'Not found'})
+    return JSONResponse(status_code=200, content=jsonable_encoder(movies))
 
 @app.get('/movie/detail', tags=['movies'], response_model=List[Movie])
 async def get_movie_by_category(
@@ -80,13 +101,20 @@ async def get_movie_by_category(
         description="This is the movie category"
     )
 ) -> List[Movie]:
-    return [movie for movie in movies if movie.category== category]
+    db = Session()
+    movie = db.query(MovieModel).filter(MovieModel.category == category).first()
+    if not movie:
+        return JSONResponse(status_code= 404, content={'message': 'Not found'})
+    return JSONResponse(status_code=200, content=jsonable_encoder(movie))
 
 @app.post('/movies', tags=['movies'], response_model=dict, status_code=201)
 async def create_movie(
     movie: Movie = Body(...)
 ):
-    movies.append(movie)
+    db = Session()
+    new_movie = MovieModel(**movie.dict())
+    db.add(new_movie)
+    db.commit()
     return JSONResponse(content={"message": "Movie added"})
 
 @app.put('/movies/{movie_id}', tags=['movies'], response_model=dict, status_code=200)
