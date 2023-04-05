@@ -126,11 +126,17 @@ async def update_movie(
         description="This is the movie ID"
     ),
     movie: Movie = Body(...)
-):
-    for idx, item in enumerate(movies):
-        if item.id == movie_id:
-            movies[idx] = movie
-
+):  
+    db = Session()
+    result = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    if not result:
+        return JSONResponse(status_code= 404, content={'message': 'Not found'})
+    result.title = movie.title
+    result.overview = movie.overview
+    result.year = movie.year
+    result.rating = movie.rating
+    result.category = movie.category
+    db.commit()
     return JSONResponse(content={"message": "Movie modified"}) 
 
 @app.delete('/movies/{movie_id}', tags=['movies'], response_model=dict, status_code=200)
@@ -142,7 +148,10 @@ async def delete_movie(
         description="This is the movie ID"  
     )
 ):
-    for movie in movies:
-        if movie.id == movie_id:
-            movies.remove(movie)
-            return JSONResponse(content={"message": "Movie deleted"}) 
+    db = Session()
+    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    if not movie:
+        return JSONResponse(status_code= 404, content={'message': 'Not found'})
+    db.delete(movie)
+    db.commit()
+    return JSONResponse(content={"message": "Movie deleted"}) 
