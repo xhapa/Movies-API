@@ -88,10 +88,14 @@ class User(BaseModel):
     email: str = Field(...)
     password: str = Field(...)
 
+# Movies App -------------------------------------------------------------------
+
+# Home page
 @app.get('/')
 def message():
     return HTMLResponse('<h1>Hello World</h1>')
 
+# Auth page
 @app.post('/login', tags=['auth'])
 def login(
     user: User = Body(...)
@@ -100,13 +104,14 @@ def login(
         token: str = create_token(user.dict())
         return JSONResponse(status_code=200, content=token)
 
+# Movies page
 @app.get('/movies', tags=['movies'], response_model=List[Movie], status_code=200, dependencies=[Depends(JWTBearer())])
 def get_movies() -> List[Movie]:
     return movies
 
 @app.get('/movies/{movie_id}', tags=['movies'], response_model=Movie)
 def get_movie(
-    movie_id: int = Field(
+    movie_id: int = Path(
         ...,
         gt=0,
         title="Movie ID",
@@ -158,7 +163,7 @@ def create_movie(
 
 @app.put('/movies/{movie_id}', tags=['movies'], response_model=dict, status_code=200)
 def update_movie(
-    movie_id: int = Field(
+    movie_id: int = Path(
         ...,
         gt=0,
         title="Movie ID",
