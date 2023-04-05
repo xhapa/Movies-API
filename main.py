@@ -20,12 +20,12 @@ movies = []
 
 # Home page
 @app.get('/')
-def message():
+async def message():
     return HTMLResponse('<h1>Hello World</h1>')
 
 # Auth page
 @app.post('/login', tags=['auth'])
-def login(
+async def login(
     user: User = Body(...)
 ):  
     if user.email == 'admin@gmail.com' and user.password == 'admin':
@@ -34,11 +34,11 @@ def login(
 
 # Movies page
 @app.get('/movies', tags=['movies'], response_model=List[Movie], status_code=200, dependencies=[Depends(JWTBearer())])
-def get_movies() -> List[Movie]:
+async def get_movies() -> List[Movie]:
     return movies
 
 @app.get('/movies/{movie_id}', tags=['movies'], response_model=Movie)
-def get_movie(
+async def get_movie(
     movie_id: int = Path(
         ...,
         gt=0,
@@ -52,7 +52,7 @@ def get_movie(
     return JSONResponse(status_code=404, content=[])
 
 @app.get('/movies/', tags=['movies'])
-def get_movies_by_category(
+async def get_movies_by_category(
     category: str = Query(
         ...,
         max_length=50,
@@ -71,7 +71,7 @@ def get_movies_by_category(
     return category
 
 @app.get('/movie/detail', tags=['movies'], response_model=List[Movie])
-def get_movie_by_category(
+async def get_movie_by_category(
     category: str = Query(
         ...,
         max_length=50,
@@ -83,14 +83,14 @@ def get_movie_by_category(
     return [movie for movie in movies if movie.category== category]
 
 @app.post('/movies', tags=['movies'], response_model=dict, status_code=201)
-def create_movie(
+async def create_movie(
     movie: Movie = Body(...)
 ):
     movies.append(movie)
     return JSONResponse(content={"message": "Movie added"})
 
 @app.put('/movies/{movie_id}', tags=['movies'], response_model=dict, status_code=200)
-def update_movie(
+async def update_movie(
     movie_id: int = Path(
         ...,
         gt=0,
@@ -106,7 +106,7 @@ def update_movie(
     return JSONResponse(content={"message": "Movie modified"}) 
 
 @app.delete('/movies/{movie_id}', tags=['movies'], response_model=dict, status_code=200)
-def delete_movie(
+async def delete_movie(
     movie_id: int = Path(
         ...,
         ge=0,
