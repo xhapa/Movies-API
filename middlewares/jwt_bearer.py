@@ -4,7 +4,7 @@ from fastapi.exceptions import HTTPException
 from fastapi import Request
 
 #Own
-from jwt_manager import validate_token
+from .jwt_manager import validate_token
 
 # Security
 class JWTBearer(HTTPBearer):
