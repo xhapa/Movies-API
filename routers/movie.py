@@ -19,13 +19,16 @@ from schemas.movie import Movie
 #Middlewares
 from middlewares.jwt_bearer import JWTBearer
 
+#Services
+from services.movie import MovieService
+
 movie_router = APIRouter()
 
 # Movies page
 @movie_router.get('/movies', tags=['movies'], response_model=List[Movie], status_code=200, dependencies=[Depends(JWTBearer())])
 async def get_movies() -> List[Movie]:
     db = Session()
-    movies = db.query(MovieModel).all()
+    movies = MovieService(db).get_movies()
     return jsonable_encoder(movies)
 
 @movie_router.get('/movies/{movie_id}', tags=['movies'], response_model=Movie)
@@ -38,7 +41,7 @@ async def get_movie(
     )
 ) -> Movie:
     db = Session()
-    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    movie = MovieService(db).get_movie(movie_id=movie_id)
     if not movie:
         return JSONResponse(status_code= 404, content={'message': 'Not found'})
     return JSONResponse(status_code=200, content=jsonable_encoder(movie))
@@ -61,7 +64,7 @@ async def get_movies_by_category(
     )
 ):
     db = Session()
-    movies = db.query(MovieModel).filter(MovieModel.category == category).all()
+    movies = MovieService(db).get_movies_by_category(category=category)
     if not movies:
         return JSONResponse(status_code= 404, content={'message': 'Not found'})
     return JSONResponse(status_code=200, content=jsonable_encoder(movies))
@@ -77,7 +80,7 @@ async def get_movie_by_category(
     )
 ) -> List[Movie]:
     db = Session()
-    movie = db.query(MovieModel).filter(MovieModel.category == category).first()
+    movie = MovieService(db).get_movie_by_category(category=category)
     if not movie:
         return JSONResponse(status_code= 404, content={'message': 'Not found'})
     return JSONResponse(status_code=200, content=jsonable_encoder(movie))
@@ -87,9 +90,7 @@ async def create_movie(
     movie: Movie = Body(...)
 ):
     db = Session()
-    new_movie = MovieModel(**movie.dict())
-    db.add(new_movie)
-    db.commit()
+    MovieService(db).create_movie(movie)
     return JSONResponse(content={"message": "Movie added"})
 
 @movie_router.put('/movies/{movie_id}', tags=['movies'], response_model=dict, status_code=200)
@@ -103,15 +104,10 @@ async def update_movie(
     movie: Movie = Body(...)
 ):  
     db = Session()
-    result = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    result = MovieService(db).valid_movie(movie_id=movie_id)
     if not result:
         return JSONResponse(status_code= 404, content={'message': 'Not found'})
-    result.title = movie.title
-    result.overview = movie.overview
-    result.year = movie.year
-    result.rating = movie.rating
-    result.category = movie.category
-    db.commit()
+    MovieService(db).update_movie(result, movie)
     return JSONResponse(content={"message": "Movie modified"}) 
 
 @movie_router.delete('/movies/{movie_id}', tags=['movies'], response_model=dict, status_code=200)
@@ -124,9 +120,8 @@ async def delete_movie(
     )
 ):
     db = Session()
-    movie = db.query(MovieModel).filter(MovieModel.id == movie_id).first()
+    movie = MovieService(db).valid_movie(movie_id=movie_id)
     if not movie:
         return JSONResponse(status_code= 404, content={'message': 'Not found'})
-    db.delete(movie)
-    db.commit()
+    MovieService(db).delete_movie(movie)
     return JSONResponse(content={"message": "Movie deleted"}) 
