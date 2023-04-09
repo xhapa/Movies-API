@@ -19,7 +19,7 @@ from middlewares.jwt_bearer import JWTBearer
 #Services
 from services.movie import MovieService
 
-movie_router = APIRouter(prefix='/movies', tags=["Movies"],)
+movie_router = APIRouter(prefix='/movies', tags=["Movies"])
 
 # Dependency
 def get_db():

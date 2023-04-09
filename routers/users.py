@@ -12,10 +12,10 @@ from schemas.user import User
 #Middleware
 from middlewares.jwt_manager import create_token
 
-users_router = APIRouter()
+users_router = APIRouter(prefix='/users', tags=["Auth"])
 
 # Auth page
-@users_router.post('/login', tags=['auth'], status_code=200, response_model=None)
+@users_router.post('/login', status_code=200, response_model=None)
 async def login(
     user: Annotated[User, Body(..., embed=True)]
 )-> JSONResponse:  
