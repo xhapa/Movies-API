@@ -19,7 +19,7 @@ from middlewares.jwt_bearer import JWTBearer
 #Services
 from services.movie import MovieService
 
-movie_router = APIRouter()
+movie_router = APIRouter(prefix='/movies', tags=["Movies"],)
 
 # Dependency
 def get_db():
@@ -30,12 +30,12 @@ def get_db():
         db.close()
 
 # Movies page
-@movie_router.get('/movies', tags=['Movies'], response_model=None, status_code=200, dependencies=[Depends(JWTBearer())])
+@movie_router.get('/', response_model=None, status_code=200, dependencies=[Depends(JWTBearer())])
 async def get_movies(db: Session = Depends(get_db)) -> JSONResponse:
     movies = MovieService(db).get_movies()
     return JSONResponse(status_code=200 ,content= jsonable_encoder(movies))
 
-@movie_router.get('/movies/{movie_id}', tags=['Movies'], response_model=None)
+@movie_router.get('/{movie_id}', response_model=None)
 async def get_movie(
     movie_id: Annotated[
         int, 
@@ -52,7 +52,7 @@ async def get_movie(
         return JSONResponse(status_code= 404, content={'message': 'Not found'})
     return JSONResponse(status_code=200 ,content= jsonable_encoder(movie))
 
-@movie_router.get('/movies/', tags=['Movies'], response_model=None)
+@movie_router.get('/', response_model=None)
 async def get_movies_by_category(
     category: Annotated[
         str | None, 
@@ -79,7 +79,7 @@ async def get_movies_by_category(
         return JSONResponse(status_code= 404, content={'message': 'Movie, Not found'})
     return JSONResponse(status_code=200, content=jsonable_encoder(movies))
 
-@movie_router.get('/movie/detail', tags=['Movies'], response_model=None)
+@movie_router.get('/detail', response_model=None)
 async def get_movie_by_category(
     category: Annotated[
         str | None, 
@@ -97,7 +97,7 @@ async def get_movie_by_category(
         return JSONResponse(status_code= 404, content={'message': 'Movie, Not found'})
     return JSONResponse(status_code=200, content=jsonable_encoder(movie))
 
-@movie_router.post('/movies', tags=['Movies'], response_model=Movie, status_code=201)
+@movie_router.post('/new', response_model=Movie, status_code=201)
 async def create_movie(
     movie: Annotated[Movie, Body()] = ...,
     db: Session = Depends(get_db)
@@ -105,7 +105,7 @@ async def create_movie(
     MovieService(db).create_movie(movie)
     return movie
 
-@movie_router.put('/movies/{movie_id}', tags=['Movies'], response_model=None, status_code=200)
+@movie_router.put('/{movie_id}', response_model=None, status_code=200)
 async def update_movie(
     movie_id: Annotated[
         int, 
@@ -124,7 +124,7 @@ async def update_movie(
     MovieService(db).update_movie(result, movie)
     return JSONResponse(content={"message": "Movie modified"}) 
 
-@movie_router.delete('/movies/{movie_id}', tags=['Movies'], response_model=None, status_code=200)
+@movie_router.delete('/{movie_id}', response_model=None, status_code=200)
 async def delete_movie(
     movie_id: Annotated[
         int, 
