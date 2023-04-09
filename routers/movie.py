@@ -21,10 +21,17 @@ from services.movie import MovieService
 
 movie_router = APIRouter()
 
+# Dependency
+def get_db():
+    db = Session()
+    try:
+        yield db
+    finally:
+        db.close()
+
 # Movies page
 @movie_router.get('/movies', tags=['Movies'], response_model=None, status_code=200, dependencies=[Depends(JWTBearer())])
-async def get_movies() -> JSONResponse:
-    db = Session()
+async def get_movies(db: Session = Depends(get_db)) -> JSONResponse:
     movies = MovieService(db).get_movies()
     return JSONResponse(status_code=200 ,content= jsonable_encoder(movies))
 
@@ -37,9 +44,9 @@ async def get_movie(
             title="Movie ID",
             description="This is the movie ID"
         )
-    ] = ...
+    ] = ...,
+    db: Session = Depends(get_db)
 ) -> Response:
-    db = Session()
     movie = MovieService(db).get_movie(movie_id=movie_id)
     if not movie:
         return JSONResponse(status_code= 404, content={'message': 'Not found'})
@@ -64,9 +71,9 @@ async def get_movies_by_category(
             title="Movie year",
             description="This is the movie year"
         )
-    ] = None
+    ] = None,
+    db: Session = Depends(get_db)
 )-> Response:
-    db = Session()
     movies = MovieService(db).get_movies_by_category(category=category)
     if not movies:
         return JSONResponse(status_code= 404, content={'message': 'Movie, Not found'})
@@ -82,9 +89,9 @@ async def get_movie_by_category(
             title="Movie category",
             description="This is the movie category"
         )
-    ] = None
+    ] = None,
+    db: Session = Depends(get_db)
 ) -> Response:
-    db = Session()
     movie = MovieService(db).get_movie_by_category(category=category)
     if not movie:
         return JSONResponse(status_code= 404, content={'message': 'Movie, Not found'})
@@ -92,9 +99,9 @@ async def get_movie_by_category(
 
 @movie_router.post('/movies', tags=['Movies'], response_model=Movie, status_code=201)
 async def create_movie(
-    movie: Annotated[Movie, Body()] = ...
+    movie: Annotated[Movie, Body()] = ...,
+    db: Session = Depends(get_db)
 )-> Movie:
-    db = Session()
     MovieService(db).create_movie(movie)
     return movie
 
@@ -108,9 +115,9 @@ async def update_movie(
             description="This is the movie ID"
         )
     ] = ...,
-    movie: Annotated[Movie, Body()] = ...
+    movie: Annotated[Movie, Body()] = ...,
+    db: Session = Depends(get_db)
 )-> Response:  
-    db = Session()
     result = MovieService(db).valid_movie(movie_id=movie_id)
     if not result:
         return JSONResponse(status_code= 404, content={'message': 'Not found'})
@@ -126,9 +133,9 @@ async def delete_movie(
             title="Movie ID",
             description="This is the movie ID"
         )
-    ] = ...
+    ] = ...,
+    db: Session = Depends(get_db)
 )-> Response:
-    db = Session()
     movie = MovieService(db).valid_movie(movie_id=movie_id)
     if not movie:
         return JSONResponse(status_code= 404, content={'message': 'Not found'})
